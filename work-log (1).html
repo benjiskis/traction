@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Log</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .input-section input,
+        .input-section textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .input-section input:focus,
+        .input-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-section textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-timer {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-timer:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-timer:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-timer:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .log-entry {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: transform 0.2s;
+        }
+
+        .log-entry:hover {
+            transform: translateX(5px);
+        }
+
+        .log-time {
+            font-size: 0.85em;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .log-duration {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .log-task {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .log-description {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .log-actions {
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .btn-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: #ff3838;
+        }
+
+        .btn-export:hover {
+            background: #218838 !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Work Log</h1>
+            <p id="current-date"></p>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number" id="task-count">0</div>
+                <div class="stat-label">Tasks</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="time-elapsed">0h 0m</div>
+                <div class="stat-label">Total Hours</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="input-section">
+                <label for="task-name">What are you working on?</label>
+                <input type="text" id="task-name" placeholder="e.g., Writing proposal, Fixing bug #123">
+            </div>
+
+            <div class="input-section">
+                <label for="task-description">Description (optional)</label>
+                <textarea id="task-description" placeholder="Add any additional details..."></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="input-section" style="margin-bottom: 0;">
+                    <label for="start-time">Start Time</label>
+                    <input type="time" id="start-time">
+                </div>
+                <div class="input-section" style="margin-bottom: 0;">
+                    <label for="end-time">End Time</label>
+                    <input type="time" id="end-time">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <button class="btn-timer" id="start-btn" onclick="startTimer()">▶ Start Timer</button>
+                <button class="btn-timer" id="stop-btn" onclick="stopTimer()" disabled style="opacity: 0.5;">⏹ Stop Timer</button>
+            </div>
+
+            <div id="timer-display" style="text-align: center; font-size: 2em; font-weight: bold; color: #667eea; margin-bottom: 20px; display: none;">
+                00:00:00
+            </div>
+
+            <button class="btn" onclick="addLog()">Log Activity</button>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="margin: 0; color: #333;">Activity Log</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="date-filter" onchange="renderLogs()" style="padding: 8px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; cursor: pointer;">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <button class="btn-export" onclick="exportToCSV()" style="background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+                        Export to Excel
+                    </button>
+                </div>
+            </div>
+            <div id="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize
+        let logs = [];
+        let firstLogTime = null;
+        let timerStart = null;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        // Load logs from localStorage
+        function loadLogs() {
+            const savedLogs = localStorage.getItem('workLogs');
+            
+            if (savedLogs) {
+                logs = JSON.parse(savedLogs);
+                if (logs.length > 0) {
+                    // Find the earliest log entry
+                    const sortedByTime = [...logs].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+                    firstLogTime = new Date(sortedByTime[0].startTime);
+                }
+            } else {
+                logs = [];
+                firstLogTime = null;
+            }
+
+            renderLogs();
+            updateStats();
+        }
+
+        // Save logs to localStorage
+        function saveLogs() {
+            localStorage.setItem('workLogs', JSON.stringify(logs));
+        }
+
+        // Add a new log entry
+        function addLog() {
+            const taskName = document.getElementById('task-name').value.trim();
+            const taskDescription = document.getElementById('task-description').value.trim();
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+
+            if (!taskName) {
+                alert('Please enter what you\'re working on');
+                return;
+            }
+
+            if (!startTime || !endTime) {
+                alert('Please enter both start and end times');
+                return;
+            }
+
+            // Parse times
+            const now = new Date();
+            const [startHours, startMinutes] = startTime.split(':');
+            const [endHours, endMinutes] = endTime.split(':');
+            
+            const startTimestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHours, startMinutes);
+            const endTimestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHours, endMinutes);
+
+            // Validate times
+            if (startTimestamp >= endTimestamp) {
+                alert('End time must be after start time');
+                return;
+            }
+
+            if (endTimestamp > new Date()) {
+                alert('Cannot log a future time');
+                return;
+            }
+
+            // Calculate duration in minutes
+            const durationMs = endTimestamp - startTimestamp;
+            const durationMinutes = Math.floor(durationMs / (1000 * 60));
+            
+            if (!firstLogTime || startTimestamp < firstLogTime) {
+                firstLogTime = startTimestamp;
+            }
+
+            const log = {
+                id: Date.now(),
+                task: taskName,
+                description: taskDescription,
+                startTime: startTimestamp.toISOString(),
+                endTime: endTimestamp.toISOString(),
+                duration: durationMinutes
+            };
+
+            logs.push(log);
+            // Sort logs by start time (newest first)
+            logs.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+            
+            saveLogs();
+            renderLogs();
+            updateStats();
+
+            // Clear inputs
+            document.getElementById('task-name').value = '';
+            document.getElementById('task-description').value = '';
+            document.getElementById('start-time').value = '';
+            document.getElementById('end-time').value = '';
+        }
+
+        // Delete a log entry
+        function deleteLog(id) {
+            logs = logs.filter(log => log.id !== id);
+            
+            if (logs.length === 0) {
+                firstLogTime = null;
+            } else {
+                // Recalculate firstLogTime from remaining logs
+                const sortedByTime = [...logs].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+                firstLogTime = new Date(sortedByTime[0].startTime);
+            }
+            
+            saveLogs();
+            renderLogs();
+            updateStats();
+        }
+
+        // Render all logs
+        function renderLogs() {
+            const container = document.getElementById('log-container');
+            const filter = document.getElementById('date-filter').value;
+            
+            // Filter logs based on selection
+            const filteredLogs = getFilteredLogs(filter);
+
+            if (filteredLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>No activities logged for this period.<br>Start tracking your work!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group logs by date
+            const logsByDate = {};
+            filteredLogs.forEach(log => {
+                const date = new Date(log.startTime).toDateString();
+                if (!logsByDate[date]) {
+                    logsByDate[date] = [];
+                }
+                logsByDate[date].push(log);
+            });
+
+            // Render grouped logs
+            let html = '';
+            Object.keys(logsByDate).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
+                const dateObj = new Date(date);
+                const isToday = dateObj.toDateString() === new Date().toDateString();
+                const dateLabel = isToday ? 'Today' : dateObj.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: dateObj.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                });
+
+                // Calculate total duration for the day
+                const dayTotal = logsByDate[date].reduce((sum, log) => sum + log.duration, 0);
+                const dayHours = Math.floor(dayTotal / 60);
+                const dayMinutes = dayTotal % 60;
+                const dayDuration = dayHours > 0 ? `${dayHours}h ${dayMinutes}m` : `${dayMinutes}m`;
+
+                html += `
+                    <div style="margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e0e0e0;">
+                            <h3 style="margin: 0; color: #333; font-size: 1.1em;">${dateLabel}</h3>
+                            <span style="color: #667eea; font-weight: 600;">${dayDuration} total</span>
+                        </div>
+                `;
+
+                logsByDate[date].forEach(log => {
+                    const startTime = new Date(log.startTime);
+                    const endTime = new Date(log.endTime);
+                    
+                    const startString = startTime.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+                    
+                    const endString = endTime.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+
+                    const hours = Math.floor(log.duration / 60);
+                    const minutes = log.duration % 60;
+                    const durationString = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+                    html += `
+                        <div class="log-entry">
+                            <div class="log-time">
+                                ${startString} - ${endString}
+                                <span class="log-duration">${durationString}</span>
+                            </div>
+                            <div class="log-task">${escapeHtml(log.task)}</div>
+                            ${log.description ? `<div class="log-description">${escapeHtml(log.description)}</div>` : ''}
+                            <div class="log-actions">
+                                <button class="btn-delete" onclick="deleteLog(${log.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Get filtered logs based on date range
+        function getFilteredLogs(filter) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            return logs.filter(log => {
+                const logDate = new Date(log.startTime);
+                const logDay = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate());
+                
+                switch(filter) {
+                    case 'today':
+                        return logDay.getTime() === today.getTime();
+                    case 'week':
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        return logDay >= weekAgo;
+                    case 'month':
+                        const monthAgo = new Date(today);
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        return logDay >= monthAgo;
+                    case 'all':
+                        return true;
+                    default:
+                        return true;
+                }
+            }).sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+        }
+
+        // Update statistics
+        function updateStats() {
+            const filter = document.getElementById('date-filter').value;
+            const filteredLogs = getFilteredLogs(filter);
+            
+            document.getElementById('task-count').textContent = filteredLogs.length;
+
+            if (filteredLogs.length > 0) {
+                // Calculate total duration for filtered logs
+                const totalMinutes = filteredLogs.reduce((sum, log) => sum + log.duration, 0);
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                document.getElementById('time-elapsed').textContent = `${hours}h ${minutes}m`;
+            } else {
+                document.getElementById('time-elapsed').textContent = '0h 0m';
+            }
+        }
+
+        // Start timer
+        function startTimer() {
+            if (isTimerRunning) return;
+
+            timerStart = new Date();
+            isTimerRunning = true;
+
+            // Set start time field
+            const startTimeString = timerStart.toTimeString().slice(0, 5);
+            document.getElementById('start-time').value = startTimeString;
+
+            // Update UI
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('start-btn').style.opacity = '0.5';
+            document.getElementById('stop-btn').disabled = false;
+            document.getElementById('stop-btn').style.opacity = '1';
+            document.getElementById('timer-display').style.display = 'block';
+
+            // Start interval to update display
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+            updateTimerDisplay();
+        }
+
+        // Stop timer
+        function stopTimer() {
+            if (!isTimerRunning) return;
+
+            const timerEnd = new Date();
+            isTimerRunning = false;
+
+            // Set end time field
+            const endTimeString = timerEnd.toTimeString().slice(0, 5);
+            document.getElementById('end-time').value = endTimeString;
+
+            // Clear interval
+            clearInterval(timerInterval);
+            timerInterval = null;
+
+            // Update UI
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('start-btn').style.opacity = '1';
+            document.getElementById('stop-btn').disabled = true;
+            document.getElementById('stop-btn').style.opacity = '0.5';
+            document.getElementById('timer-display').style.display = 'none';
+
+            timerStart = null;
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            if (!timerStart) return;
+
+            const now = new Date();
+            const diff = now - timerStart;
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            const display = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById('timer-display').textContent = display;
+        }
+
+        // Export logs to CSV
+        function exportToCSV() {
+            const filter = document.getElementById('date-filter').value;
+            const filteredLogs = getFilteredLogs(filter);
+            
+            if (filteredLogs.length === 0) {
+                alert('No logs to export');
+                return;
+            }
+
+            // Sort logs by timestamp (oldest first for chronological order)
+            const sortedLogs = [...filteredLogs].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+            // Create CSV header
+            let csv = 'Date,Start Time,End Time,Duration (minutes),Task,Description\n';
+
+            // Add each log entry
+            sortedLogs.forEach(log => {
+                const startDate = new Date(log.startTime);
+                const endDate = new Date(log.endTime);
+                
+                const dateString = startDate.toLocaleDateString('en-US');
+                const startTimeString = startDate.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                const endTimeString = endDate.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+
+                // Escape fields that contain commas or quotes
+                const task = escapeCSV(log.task);
+                const description = escapeCSV(log.description || '');
+
+                csv += `${dateString},${startTimeString},${endTimeString},${log.duration},${task},${description}\n`;
+            });
+
+            // Create a blob and download link
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const today = new Date().toISOString().split('T')[0];
+            const filterSuffix = filter !== 'all' ? `-${filter}` : '';
+            link.setAttribute('href', url);
+            link.setAttribute('download', `work-log-${today}${filterSuffix}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Escape CSV fields
+        function escapeCSV(field) {
+            if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+                return `"${field.replace(/"/g, '""')}"`;
+            }
+            return field;
+        }
+
+        // Display current date
+        function updateDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateString = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('current-date').textContent = dateString;
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('task-name').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addLog();
+            }
+        });
+
+        // Update stats when filter changes
+        document.getElementById('date-filter').addEventListener('change', function() {
+            updateStats();
+        });
+
+        // Initialize on load
+        updateDate();
+        loadLogs();
+    </script>
+</body>
+</html>
