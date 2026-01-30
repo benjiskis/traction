@@ -1,9 +1,21 @@
 <!DOCTYPE html>
+<!--
+    Work Log App
+    Version: 1.0.0
+    Last Updated: 2026-01-30
+    Description: Cloud-synced time tracking application with Google authentication
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TTTT Task Logger</title>
+    <title>Work Log</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -228,12 +240,157 @@
             font-size: 0.9em;
             opacity: 0.9;
         }
+
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .auth-card h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .auth-card p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .btn-signin {
+            background: white;
+            color: #333;
+            border: 2px solid #e0e0e0;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn-signin:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .btn-signout {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 15px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 10px;
+        }
+
+        .btn-signout:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
+    <!-- Authentication Screen -->
+    <div id="auth-container" class="auth-container">
+        <div class="auth-card">
+            <h1>📝 Work Log</h1>
+            <p>Sign in with your Google account to start tracking your work</p>
+            <button class="btn-signin" onclick="signIn()">
+                <svg width="20" height="20" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    <path fill="none" d="M0 0h48v48H0z"/>
+                </svg>
+                Sign in with Google
+            </button>
+            <div id="auth-loading" class="hidden">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 10px;">Signing in...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-container" class="hidden">
     <div class="container">
         <div class="header">
-            <h1>📝 TTTT Task Log</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h1 style="margin: 0;">📝 Work Log</h1>
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar"></div>
+                    <span id="user-name"></span>
+                    <button class="btn-signout" onclick="signOut()">Sign Out</button>
+                </div>
+            </div>
             <p id="current-date"></p>
         </div>
 
@@ -300,8 +457,31 @@
             <div id="log-container"></div>
         </div>
     </div>
+    </div>
+
+    <div style="text-align: center; color: white; padding: 20px; font-size: 0.85em; opacity: 0.7;">
+        Work Log App v1.0.0 | Last Updated: 2026-01-30
+    </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyASg7_Z2GQL3-BzV1uT3pBWT5bFpSCr8qg",
+            authDomain: "t-tracker-72af5.firebaseapp.com",
+            projectId: "t-tracker-72af5",
+            storageBucket: "t-tracker-72af5.firebasestorage.app",
+            messagingSenderId: "990510011053",
+            appId: "1:990510011053:web:d00d322602fb4efe2bec24"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Current user
+        let currentUser = null;
+
         // Initialize
         let logs = [];
         let firstLogTime = null;
@@ -309,29 +489,118 @@
         let timerInterval = null;
         let isTimerRunning = false;
 
-        // Load logs from localStorage
-        function loadLogs() {
-            const savedLogs = localStorage.getItem('workLogs');
-            
-            if (savedLogs) {
-                logs = JSON.parse(savedLogs);
-                if (logs.length > 0) {
-                    // Find the earliest log entry
-                    const sortedByTime = [...logs].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-                    firstLogTime = new Date(sortedByTime[0].startTime);
-                }
+        // Authentication
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                showApp();
+                loadLogs();
             } else {
-                logs = [];
-                firstLogTime = null;
+                currentUser = null;
+                showAuth();
             }
+        });
 
-            renderLogs();
-            updateStats();
+        // Handle redirect result
+        auth.getRedirectResult()
+            .then((result) => {
+                if (result.user) {
+                    // User signed in successfully
+                    console.log('Sign in successful');
+                }
+            })
+            .catch((error) => {
+                console.error('Sign in error:', error);
+                alert('Sign in failed: ' + error.message);
+                document.getElementById('auth-loading').classList.add('hidden');
+            });
+
+        function signIn() {
+            document.getElementById('auth-loading').classList.remove('hidden');
+            const provider = new firebase.auth.GoogleAuthProvider();
+            
+            // Use redirect for better compatibility
+            auth.signInWithRedirect(provider);
         }
 
-        // Save logs to localStorage
-        function saveLogs() {
-            localStorage.setItem('workLogs', JSON.stringify(logs));
+        function signOut() {
+            if (confirm('Are you sure you want to sign out?')) {
+                auth.signOut();
+            }
+        }
+
+        function showAuth() {
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+        }
+
+        function showApp() {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            
+            // Update user info
+            if (currentUser) {
+                const displayName = currentUser.displayName || currentUser.email;
+                const initial = displayName.charAt(0).toUpperCase();
+                document.getElementById('user-name').textContent = displayName;
+                document.getElementById('user-avatar').textContent = initial;
+            }
+            
+            updateDate();
+        }
+
+        // Load logs from Firestore
+        function loadLogs() {
+            if (!currentUser) return;
+
+            db.collection('logs')
+                .doc(currentUser.uid)
+                .collection('entries')
+                .orderBy('startTime', 'desc')
+                .get()
+                .then((querySnapshot) => {
+                    logs = [];
+                    querySnapshot.forEach((doc) => {
+                        logs.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    if (logs.length > 0) {
+                        const sortedByTime = [...logs].sort((a, b) => 
+                            new Date(a.startTime) - new Date(b.startTime)
+                        );
+                        firstLogTime = new Date(sortedByTime[0].startTime);
+                    }
+                    
+                    renderLogs();
+                    updateStats();
+                })
+                .catch((error) => {
+                    console.error('Error loading logs:', error);
+                    alert('Error loading logs: ' + error.message);
+                });
+        }
+
+        // Save log to Firestore
+        function saveLog(log) {
+            if (!currentUser) return Promise.reject('No user logged in');
+
+            const logData = {
+                task: log.task,
+                description: log.description,
+                startTime: log.startTime,
+                endTime: log.endTime,
+                duration: log.duration,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            return db.collection('logs')
+                .doc(currentUser.uid)
+                .collection('entries')
+                .doc(log.id.toString())
+                .set(logData);
         }
 
         // Add a new log entry
@@ -387,36 +656,59 @@
                 duration: durationMinutes
             };
 
-            logs.push(log);
-            // Sort logs by start time (newest first)
-            logs.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
-            
-            saveLogs();
-            renderLogs();
-            updateStats();
+            // Save to Firestore
+            saveLog(log)
+                .then(() => {
+                    logs.push(log);
+                    logs.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+                    
+                    renderLogs();
+                    updateStats();
 
-            // Clear inputs
-            document.getElementById('task-name').value = '';
-            document.getElementById('task-description').value = '';
-            document.getElementById('start-time').value = '';
-            document.getElementById('end-time').value = '';
+                    // Clear inputs
+                    document.getElementById('task-name').value = '';
+                    document.getElementById('task-description').value = '';
+                    document.getElementById('start-time').value = '';
+                    document.getElementById('end-time').value = '';
+                })
+                .catch((error) => {
+                    console.error('Error saving log:', error);
+                    alert('Error saving log: ' + error.message);
+                });
         }
 
         // Delete a log entry
         function deleteLog(id) {
-            logs = logs.filter(log => log.id !== id);
-            
-            if (logs.length === 0) {
-                firstLogTime = null;
-            } else {
-                // Recalculate firstLogTime from remaining logs
-                const sortedByTime = [...logs].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-                firstLogTime = new Date(sortedByTime[0].startTime);
+            if (!confirm('Are you sure you want to delete this entry?')) {
+                return;
             }
-            
-            saveLogs();
-            renderLogs();
-            updateStats();
+
+            if (!currentUser) return;
+
+            db.collection('logs')
+                .doc(currentUser.uid)
+                .collection('entries')
+                .doc(id.toString())
+                .delete()
+                .then(() => {
+                    logs = logs.filter(log => log.id !== id);
+                    
+                    if (logs.length === 0) {
+                        firstLogTime = null;
+                    } else {
+                        const sortedByTime = [...logs].sort((a, b) => 
+                            new Date(a.startTime) - new Date(b.startTime)
+                        );
+                        firstLogTime = new Date(sortedByTime[0].startTime);
+                    }
+                    
+                    renderLogs();
+                    updateStats();
+                })
+                .catch((error) => {
+                    console.error('Error deleting log:', error);
+                    alert('Error deleting log: ' + error.message);
+                });
         }
 
         // Render all logs
@@ -718,7 +1010,6 @@
 
         // Initialize on load
         updateDate();
-        loadLogs();
     </script>
 </body>
 </html>
