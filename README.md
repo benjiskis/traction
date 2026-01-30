@@ -1,7 +1,20 @@
-[README.md](https://github.com/user-attachments/files/24943383/README.md)
 # 📝 Work Log App
 
-A simple, cloud-synced time tracking application for teams using Microsoft 365. Track your daily work activities with start/end times, durations, and descriptions across all your devices.
+**Version:** 1.0.5  
+**Last Updated:** 2026-01-30  
+**Authentication:** Google OAuth 2.0
+
+A simple, cloud-synced time tracking application for teams. Track your daily work activities with start/end times, durations, and descriptions across all your devices.
+
+## Version History
+
+### v1.0.0 (2026-01-30)
+- Initial release with Google Authentication
+- Cloud sync via Firebase Firestore
+- Timer and manual time entry
+- Date filtering (Today, Week, Month, All Time)
+- CSV export for Excel analysis
+- Multi-user support with data isolation
 
 ## Features
 
@@ -18,7 +31,7 @@ A simple, cloud-synced time tracking application for teams using Microsoft 365. 
 - **CSV Export**: Export filtered data to Excel for analysis
 
 ### 🔐 Authentication
-- **Microsoft 365 Login**: Secure authentication via Azure AD
+- **Google Sign-In**: Secure authentication via Google OAuth
 - **Multi-User Support**: Each team member has private, isolated data
 - **Cross-Device Sync**: Access your logs from any device
 
@@ -26,7 +39,7 @@ A simple, cloud-synced time tracking application for teams using Microsoft 365. 
 
 ### Prerequisites
 - Firebase account (free tier)
-- Azure AD app registration (if using Microsoft 365 auth)
+- Google account (for authentication)
 - GitHub account (for hosting)
 
 ### 1. Firebase Setup
@@ -64,7 +77,11 @@ A simple, cloud-synced time tracking application for teams using Microsoft 365. 
    - Navigate to "Build" → "Authentication"
    - Click "Get started"
    - Go to "Sign-in method" tab
-   - Enable "Microsoft" provider
+   - Click on "Google"
+   - Toggle **Enable**
+   - Enter a project support email (your email address)
+   - Click "Save"
+   - That's it! Google authentication is now enabled.
 
 5. **Get Firebase Config**
    - Click the gear icon → "Project settings"
@@ -73,32 +90,9 @@ A simple, cloud-synced time tracking application for teams using Microsoft 365. 
    - Register your app
    - Copy the `firebaseConfig` object
 
-### 2. Azure AD Setup
+### 2. Update Firebase Config in Code
 
-1. **Register Application**
-   - Go to [Azure Portal](https://portal.azure.com)
-   - Navigate to "Azure Active Directory" → "App registrations"
-   - Click "New registration"
-   - Name: "Work Log App"
-   - Supported account types: Choose based on your needs
-   - Click "Register"
-
-2. **Configure Authentication**
-   - In your app registration, go to "Authentication"
-   - Click "Add a platform" → "Web"
-   - Add redirect URIs:
-     - `https://t-tracker-72af5.firebaseapp.com/__/auth/handler` (replace with your Firebase auth domain)
-     - Your GitHub Pages URL (e.g., `https://yourusername.github.io/work-log`)
-   - Save changes
-
-3. **Get Credentials**
-   - Copy the "Application (client) ID"
-   - Copy the "Directory (tenant) ID"
-   - Paste these into Firebase Console → Authentication → Microsoft provider settings
-
-### 3. Update Firebase Config in Code
-
-Open `work-log.html` and update the `firebaseConfig` object with your values:
+Open `work-log.html` (or `index.html`) and update the `firebaseConfig` object with your values:
 
 ```javascript
 const firebaseConfig = {
@@ -111,7 +105,7 @@ const firebaseConfig = {
 };
 ```
 
-### 4. Deploy to GitHub Pages
+### 3. Deploy to GitHub Pages
 
 1. **Create GitHub Repository**
    - Go to [GitHub](https://github.com)
@@ -129,17 +123,15 @@ const firebaseConfig = {
    - Click "Save"
    - Your app will be live at `https://yourusername.github.io/work-log`
 
-4. **Update Azure AD Redirect URI**
-   - Add your GitHub Pages URL to Azure AD app registration redirect URIs
-
 ## Usage Guide
 
 ### Getting Started
 
 1. **Sign In**
    - Open the app URL
-   - Click "Sign in with Microsoft"
-   - Authenticate with your Microsoft 365 account
+   - Click "Sign in with Google"
+   - Select your Google account
+   - Grant permissions
 
 2. **Log an Activity**
    - Enter what you're working on
@@ -190,8 +182,22 @@ logs (collection)
               ├── startTime: timestamp (ISO string)
               ├── endTime: timestamp (ISO string)
               ├── duration: number (minutes)
+              ├── userEmail: string
+              ├── userName: string
               └── createdAt: serverTimestamp
 ```
+
+### CSV Export Format
+
+When exported, the CSV includes:
+- User Email
+- User Name
+- Date
+- Start Time
+- End Time
+- Duration (minutes)
+- Task
+- Description
 
 ### Security
 
@@ -208,9 +214,10 @@ logs (collection)
 ## Troubleshooting
 
 ### "Sign in failed" Error
-- Check that Azure AD redirect URIs include your app URL
-- Verify Microsoft provider is enabled in Firebase Authentication
-- Ensure your Microsoft account has access
+- Check that Google provider is enabled in Firebase Authentication
+- Verify authorized domains include your GitHub Pages domain
+- Ensure you're using a valid Google account
+- Check browser console for detailed error messages
 
 ### Data Not Syncing
 - Check internet connection
@@ -218,7 +225,7 @@ logs (collection)
 - Check browser console for errors
 
 ### Can't See Logs on Mobile
-- Ensure you're signed in with the same Microsoft account
+- Ensure you're signed in with the same Google account across devices
 - Check that the app URL is correct (https, not http)
 - Try clearing browser cache and signing in again
 
@@ -229,7 +236,7 @@ logs (collection)
 
 ## Privacy & Security
 
-- **Authentication**: Secured via Microsoft Azure AD
+- **Authentication**: Secured via Google OAuth 2.0
 - **Data Storage**: Encrypted in transit and at rest via Firebase
 - **Access Control**: Users can only access their own data
 - **No Third-Party Tracking**: No analytics or tracking scripts
@@ -244,6 +251,35 @@ logs (collection)
 Typical usage for 10 users logging 20 activities/day:
 - Writes: ~200/day (well within free tier)
 - Reads: ~2,000/day (well within free tier)
+
+## Updating the App
+
+When a new version is released:
+
+1. **Check Version**: Look at the version number in the footer of the app or in the HTML file header
+2. **Backup Data**: Your data is in Firebase, but you can export to CSV as a backup
+3. **Update File**: Replace your `index.html` on GitHub with the new version
+4. **Clear Cache**: Hard refresh your browser (Ctrl+Shift+R or Cmd+Shift+R)
+5. **Test**: Sign in and verify everything works
+
+## Version History
+
+### v1.0.5 (2026-01-30)
+- Added user email and name to log entries
+- Updated CSV export to include user information
+- Switched to popup authentication for better reliability
+
+### v1.0.4 (2026-01-30)
+- Switched from redirect to popup sign-in method
+- Improved authentication reliability
+
+### v1.0.0 (2026-01-30)
+- Initial release with Google Authentication
+- Cloud sync via Firebase Firestore
+- Timer and manual time entry
+- Date filtering (Today, Week, Month, All Time)
+- CSV export for Excel analysis
+- Multi-user support with data isolation
 
 ## License
 
