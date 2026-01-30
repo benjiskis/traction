@@ -490,7 +490,10 @@
         let isTimerRunning = false;
 
         // Authentication
+        console.log('Initializing auth...');
+        
         auth.onAuthStateChanged((user) => {
+            console.log('Auth state changed:', user ? user.email : 'no user');
             if (user) {
                 currentUser = user;
                 showApp();
@@ -501,12 +504,16 @@
             }
         });
 
-        // Handle redirect result
+        // Handle redirect result - this runs when returning from Google login
         auth.getRedirectResult()
             .then((result) => {
+                console.log('Redirect result:', result);
                 if (result.user) {
-                    // User signed in successfully
-                    console.log('Sign in successful');
+                    console.log('Sign in successful:', result.user.email);
+                } else if (result.credential) {
+                    console.log('Has credential but no user yet');
+                } else {
+                    console.log('No redirect result (normal page load)');
                 }
             })
             .catch((error) => {
