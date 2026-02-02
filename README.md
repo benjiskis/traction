@@ -1,6 +1,6 @@
 # 📝 Work Log App
 
-**Version:** 1.0.5  
+**Version:** 1.0.6  
 **Last Updated:** 2026-01-30  
 **Authentication:** Google OAuth 2.0
 
@@ -263,6 +263,9 @@ When a new version is released:
 5. **Test**: Sign in and verify everything works
 
 ## Version History
+
+### v1.0.6 (2026-01-30)
+- Added "Yesterday" option to the date filter dropdown
 
 ### v1.0.5 (2026-01-30)
 - Added user email and name to log entries
